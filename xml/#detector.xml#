@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!--
+<!DOCTYPE document SYSTEM "detector.dtd">
+-->
+
+<document>
+
+<expVol>
+  <expVolX unit="m"> 5. </expVolX> <!-- 15 m -->
+  <expVolY unit="m"> 5. </expVolY> <!-- 15 m -->
+  <airThickness unit="m"> 2. </airThickness>
+  <soilThickness unit="m"> 2.6 </soilThickness>
+  <!-- N.B : thickness above the tank : 2.5 m + 0.1 m under the tank -->
+</expVol>
+
+
+<tank>
+   <tankRadius unit="m">      3.4     </tankRadius>      <!-- 0.35 -->
+   <tankHalfHeight unit="m">  0.6  </tankHalfHeight>     <!-- 0.40 -->
+   <tankThickness unit="m">   0.1    </tankThickness>    
+   <tyvekThickness unit="m">  0.01  </tyvekThickness>    <!-- 0.012 -->
+</tank>
+
+<pmtArray>
+         <pmtx >  1  </pmtx>
+         <pmty >  1  </pmty>
+</pmtArray>
+
+<pmtProperty>   
+	 <pmt_momentum_bins unit="eV"> 2.08 4.20     </pmt_momentum_bins>
+	 <pmtface_Rindex> 1.47 1.47                  </pmtface_Rindex>
+	 <pmtface_AbsLength unit="mm"> 0.0005 0.0005 </pmtface_AbsLength>
+	 <interface_Rindex> 1.49 1.49                </interface_Rindex>
+	 <interface_AbsLength unit="cm"> 1000.0 1000.0 </interface_AbsLength>
+	 <dome_Rindex> 1.49 1.49                     </dome_Rindex>
+	 <dome_AbsLength unit="cm"> 1000.0 1000.0    </dome_AbsLength>
+         <min_cerenkov_energy unit="eV">   2.08      </min_cerenkov_energy>
+	 <max_cerenkov_energy unit="eV">   4.20      </max_cerenkov_energy>
+         <cerenkov_energy unit="eV"> 2.08  2.16  2.19  2.23  2.27  2.32
+	                             2.36  2.41  2.46  2.50  2.56  2.61
+                                     2.67  2.72  2.79  2.85  2.92  2.99
+                                     3.06  3.14  3.22  3.31  3.40  3.49
+                                     3.59  3.70  3.81  3.94  4.07  4.20 </cerenkov_energy>
+         <maxQE>  0.24  </maxQE>
+         <QE> 0.020  0.030  0.040  0.050  0.060  0.070
+	      0.080  0.090  0.100  0.110  0.130  0.150
+              0.160  0.180  0.190  0.200  0.210  0.220
+              0.220  0.230  0.240  0.240  0.240  0.230
+              0.220  0.210  0.170  0.140  0.090  0.040 </QE>
+	 <collection_efficiency>   0.66    </collection_efficiency>
+</pmtProperty>
+
+<water>
+       <water_momentumBins unit="eV"> 2.08  2.16  2.19  2.23  2.27  2.32
+                                      2.36  2.41  2.46  2.50  2.56  2.61
+                                      2.67  2.72  2.79  2.85  2.92  2.99
+                                      3.06  3.14  3.22  3.31  3.40  3.49
+                                      3.59  3.70  3.81  3.94  4.07  4.20 </water_momentumBins>
+       <maxWaterAbsLength unit="m"> 30.0  </maxWaterAbsLength>
+       <!-- all water absorption length values must be multiplied by the maxWAL -->
+       <water_AbsLength> 0.092  0.133  0.180  0.203  0.226  0.258
+                         0.284  0.302  0.403  0.560  0.735  0.818
+                         0.923  0.923  0.993  0.993  1.000  0.941
+                         0.889  0.842  0.754  0.655  0.480  0.380
+                         0.311  0.257  0.212  0.171  0.137  0.102 </water_AbsLength>
+       <water_Rindex> 1.33  1.33  1.33  1.33  1.33  1.33
+                      1.33  1.33  1.33  1.33  1.33  1.33
+                      1.33  1.33  1.33  1.33  1.33  1.33
+                      1.33  1.33  1.33  1.33  1.33  1.33
+                      1.33  1.33  1.33  1.33  1.33  1.33 </water_Rindex>
+</water>
+
+<liner>
+       <sigmaAlpha> 0.17 </sigmaAlpha>
+       <maxReflectivity> 0.92 </maxReflectivity> 
+       <liner_momentum_bins unit="eV"> 2.08  2.16  2.19  2.23  2.27  2.32
+                                       2.36  2.41  2.46  2.50  2.56  2.61
+                                       2.67  2.72  2.79  2.85  2.92  2.99
+                                       3.06  3.14  3.22  3.31  3.40  3.49
+                                       3.59  3.70  3.81  3.94  4.07  4.20 </liner_momentum_bins>
+       <!-- all reflectivity values must be multiplied by maximum reflectivity -->
+      <reflectivity> .9957  .9953  .9948  .9942  .9939  .9937
+                     .9937  .9940  .9945  .9954  .9964  .9975
+                     .9985  .9993  1.000  1.000  .9993  .9977
+                     .9948  .9903  .9840  .9753  .9642  .9500
+                     .9334  .9108  .8849  .8541  .8178  .7755 </reflectivity>     
+       <specularLobe> 0.2  0.2  0.2  0.2  0.2  0.2
+                      0.2  0.2  0.2  0.2  0.2  0.2
+                      0.2  0.2  0.2  0.2  0.2  0.2
+                      0.2  0.2  0.2  0.2  0.2  0.2
+                      0.2  0.2  0.2  0.2  0.2  0.2 </specularLobe>
+       <specularSpike> 0.0  0.0  0.0  0.0  0.0  0.0
+                       0.0  0.0  0.0  0.0  0.0  0.0
+                       0.0  0.0  0.0  0.0  0.0  0.0
+                       0.0  0.0  0.0  0.0  0.0  0.0
+                       0.0  0.0  0.0  0.0  0.0  0.0 </specularSpike>
+       <backScatter> 0.0  0.0  0.0  0.0  0.0  0.0
+                     0.0  0.0  0.0  0.0  0.0  0.0
+                     0.0  0.0  0.0  0.0  0.0  0.0
+                     0.0  0.0  0.0  0.0  0.0  0.0
+                     0.0  0.0  0.0  0.0  0.0  0.0 </backScatter>
+       <liner_Rindex> 0.0  0.0  0.0  0.0  0.0  0.0
+                      0.0  0.0  0.0  0.0  0.0  0.0
+                      0.0  0.0  0.0  0.0  0.0  0.0
+                      0.0  0.0  0.0  0.0  0.0  0.0
+                      0.0  0.0  0.0  0.0  0.0  0.0 </liner_Rindex>
+       <liner_AbsLength unit="cm"> 1000.  1000.  1000.  1000.  1000.  1000.
+                                   1000.  1000.  1000.  1000.  1000.  1000.
+                                   1000.  1000.  1000.  1000.  1000.  1000.
+                                   1000.  1000.  1000.  1000.  1000.  1000.
+                                   1000.  1000.  1000.  1000.  1000.  1000.</liner_AbsLength>
+</liner>     
+
+
+</document>

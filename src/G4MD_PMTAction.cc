@@ -1,0 +1,115 @@
+#include <G4MD_PMTAction.hh>
+#include <G4MD_EventAction.hh>
+#include <G4MD_TrackingAction.hh>
+#include <G4MD_PrimaryGeneratorAction.hh>
+
+#include <G4Event.hh>
+#include <G4VPhysicalVolume.hh>
+#include <G4SDManager.hh>
+#include <G4HCofThisEvent.hh>
+#include <G4VTouchable.hh>
+#include <G4TouchableHistory.hh>
+#include <G4VHitsCollection.hh>
+#include <G4TrajectoryContainer.hh>
+#include <G4Trajectory.hh>
+#include <G4Track.hh>
+#include <G4Step.hh>
+
+#include <G4ios.hh>
+#include <TNtuple.h>
+#include <OutputHandler.h>
+
+G4MD_PMTAction::G4MD_PMTAction(G4String name, G4int pmtindex)
+  :G4VSensitiveDetector(name)
+{
+  fPMTIndex = pmtindex;
+  
+  if ( fPMTIndex < 1 || fPMTIndex > 3 )
+    {
+      cerr << "Error in G4MD_PMTAction: Invalid PMT index ! Define in DetectorConstruction" << endl;
+      exit(1);
+    }
+}
+
+G4MD_PMTAction::~G4MD_PMTAction()
+{;}
+
+void G4MD_PMTAction::Initialize(G4HCofThisEvent* HCE)
+{;}
+
+G4bool G4MD_PMTAction::ProcessHits(G4Step* aStep,G4TouchableHistory* ROhist)
+{
+  // if (aStep->GetPreStepPoint()->GetPhysicalVolume()->GetName() != "pmt1") return false;
+ 
+  // Get the information of the Hits on the PMT
+  // ------------------------------------------
+  struct Hit aHit;    
+  
+  G4int hitparticle_id = aStep->GetTrack()->GetDefinition()->GetPDGEncoding();  
+   
+  G4cout << " ############# HOLA SOY EN HIT PROCESS !! ################### " << G4endl;
+  
+  if (hitparticle_id == 0) 
+    {
+      G4cout << " ############# HOLA CONDITION ID=0 SATISFIED !! ################### " << G4endl;
+      aHit.particle = G4MD_EventAction::GetPrimaryID();
+      aHit.energy = aStep->GetPreStepPoint()->GetKineticEnergy();  
+      aHit.time = aStep->GetPreStepPoint()->GetGlobalTime();
+      
+      G4ThreeVector xyz = aStep->GetPreStepPoint()->GetPosition();
+      aHit.x0 = xyz.x();
+      aHit.y0 = xyz.y();
+      aHit.z0 = xyz.z();
+      
+      G4ThreeVector dir = aStep->GetPreStepPoint()->GetMomentumDirection();
+      aHit.cx0 = dir.x();
+      aHit.cy0 = dir.y();
+      aHit.cz0 = dir.z();
+      aHit.bounces = G4MD_TrackingAction::fgNbounces;
+      
+      G4int tmp_id = aHit.particle;
+      G4double tmp_ene = aHit.energy;
+      G4double tmp_time = aHit.time;
+      G4int tmp_od = aStep->GetTrack()->GetTrackID();
+      G4int tmp_nbounce = G4MD_TrackingAction::fgNbounces;
+      G4double tmp_gtime = aStep->GetTrack()->GetGlobalTime();
+      
+      // Time ix and iy;
+      // G4cout << " pe = " << tmp_time << G4endl;
+      
+      G4StepPoint* preStepPoint = aStep->GetPreStepPoint();
+      
+      fHitList.push_back(aHit);
+      
+      return true;
+    }
+  else 
+    return false;
+}
+
+void G4MD_PMTAction::EndOfEvent(G4HCofThisEvent* HCE)
+{
+  
+  OutputHandler* output = OutputHandler::GetInstance();
+  MDEvent* mdevent = output->GetMdevent(); 
+  
+  TNtuple* cntuple = output->GetCerenkovNtuple();
+  
+  list<struct Hit>::iterator iHit;
+  
+  G4float Var[2];
+  for (  iHit  = fHitList.begin(); iHit != fHitList.end(); iHit++ ) {
+    Var[0] = (G4float) (*iHit).time;
+    Var[1] = (G4float) (*iHit).bounces;
+    
+    mdevent->AddPhoton((*iHit).time, (*iHit).bounces);
+    
+    cntuple->Fill(Var);
+  }
+  
+  list<struct Hit>::iterator ibegin = fHitList.begin();
+  list<struct Hit>::iterator iend   = fHitList.end();
+  
+  fHitList.erase(ibegin, iend);
+}
+

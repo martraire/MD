@@ -1,0 +1,107 @@
+// ************************************************************************
+// * G4MD_ParticleIDManager.h                                             *
+// *                                                                      *
+// * Date : 16 July 2015                                                  * 
+// * Authors : D. Martraire                                               *
+// *                                                                      *
+// * Description :                                                        *
+// * This file translates Geant4 to Corsika particle IDs and vice versa.  *
+// ************************************************************************
+
+
+#ifndef G4SD_ParticleIDManager_h
+#define G4SD_ParticleIDManager_h 1
+
+class G4SD_ParticleIDManager
+{
+  public:
+  inline G4int     GetCorsikaID (G4String);
+  inline G4String  GetG4Name (G4int);
+};
+ 
+///Translates Corsika to Geant4 name
+G4String G4SD_ParticleIDManager::GetG4Name (G4int pid)
+{
+
+    G4String pname="no";
+
+    switch (pid/1000)
+         {
+           case 1: pname="gamma"; break;
+           case 2: pname="e+"; break;
+           case 3: pname="e-"; break;
+           case 5: pname="mu+"; break;
+           case 6: pname="mu-"; break;
+           case 7: pname="pi0"; break;
+           case 8: pname="pi+"; break;
+           case 9: pname="pi-"; break;
+           case 10: pname="kaon0L"; break;
+           case 11: pname="kaon+"; break;
+           case 12: pname="kaon-"; break;
+           case 13: pname="neutron"; break;
+           case 14: pname="proton"; break;
+           case 15: pname="anti_proton"; break;
+	   case 16: pname="kaon0S"; break;
+	   case 17: pname="eta"; break;
+	   case 18: pname="lambda"; break;
+	   case 19: pname="sigma+"; break;
+	   case 20: pname="sigma0"; break;
+	   case 21: pname="sigma-"; break;
+	   case 22: pname="xi0"; break;
+	   case 23: pname="xi-"; break;
+	   case 24: pname="omega-"; break;
+           case 25: pname="anti_neutron"; break;
+           case 26: pname="anti_lambda"; break;
+           case 27: pname="anti_sigma-"; break;
+           case 28: pname="anti_sigma0"; break;
+           case 29: pname="anti_sigma+"; break;                 
+           case 30: pname="anti_xi0"; break;                 
+           case 31: pname="anti_xi+"; break;                 
+           case 32: pname="anti_omega+"; break;                 
+	     
+	     //Particle IDs 75 and 76 are not actual particles but additional info for the next record which hold a muon.
+	     //So we make them neutrinos and we discard them
+	   case 75: pname="no"; break;
+	   case 76: pname="no"; break;
+	   
+           case 201:pname="deuteron"; break;
+           case 301:pname="triton"; break;
+           case 302:pname="He3"; break;
+           case 402:pname="alpha"; break;
+                                                                                                                                                                            
+           default:  G4cout <<"Can't Find id "<<pid<<G4endl;
+         }
+
+return pname;
+
+}
+
+///Translates Geant4 name to Corsika  PID
+G4int G4SD_ParticleIDManager::GetCorsikaID (G4String pname)
+{
+
+    if (pname=="gamma") return 1;
+    else if (pname=="e+") return 2;
+    else if (pname=="e-") return 3;
+    else if (pname=="mu+") return 5;
+    else if (pname=="mu-") return 6;
+    else if (pname=="pi0") return 7;
+    else if (pname=="pi+") return 8;
+    else if (pname=="pi-") return 9;
+    else if (pname=="kaon0L") return 10;
+    else if (pname=="kaon+") return 11;
+    else if (pname=="kaon-") return 12;
+    else if (pname=="neutron") return 13;
+    else if (pname=="proton") return 14;
+    else if (pname=="anti_proton") return 15;
+    else if (pname=="anti_neutron") return 25;
+    else if (pname=="deuteron") return 201;
+    else if (pname=="triton") return 301;
+    else if (pname=="He3") return 302;
+    else if (pname=="alpha") return 402;
+    else {G4cout <<"Can't Find id for particle "<<pname<<G4endl; return -1;}
+
+}
+
+#endif
+                                                                                                                                                                            

@@ -1,0 +1,26 @@
+# Add support for ROOT dictionary generation in Geant4.
+# Please define 'dictheaders' and put a dependency 'rootdict' just after target 'all'.
+# D. Martraire <diane.martraire@ihep.ac.cn>, 07/09/2015
+
+
+G4TMPDIR=/afs/ihep.ac.cn/users/d/diane/g4work/tmp/Linux-g++/MDCalib
+
+dictheaders = include/MDEvent.hh
+dictsources = $(patsubst include/%.hh,$(G4TMPDIR)/%Dict.cc,$(dictheaders))
+dictobjects = $(patsubst %.cc,%.o,$(dictsources))
+
+EXTRALIBS += $(filter-out -pthread,$(shell $(ROOTSYS)/bin/root-config --glibs)) -lMinuit -L${XERCESCROOT}/lib -lxerces-c
+CPPFLAGS  += $(filter-out -pthread,$(shell $(ROOTSYS)/bin/root-config --cflags)) -I.
+
+rootdict: $(dictobjects)
+
+$(dictobjects): %.o: %.cc
+ifdef CPPVERBOSE
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(OUT_OBJ)$(G4TMPDIR)/$(*F).o $^
+else
+	@echo Compiling $^ ...
+	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(OUT_OBJ)$(G4TMPDIR)/$(*F).o $^
+endif
+
+$(dictsources): $(G4TMPDIR)/%Dict.cc: include/%.hh include/%LinkDef.hh
+	rootcint -f $@ -c -Iinclude $^

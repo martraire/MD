@@ -1,0 +1,172 @@
+terp// ***********************************************************************
+// * G4MD_DetectorConstruction.hh                                        *
+// *                                                                     *
+// * Date : 15 June 2015                                                 *
+// * Author : Diane Martraire (IHEP)                                     *
+// *                                                                     *
+// * Description :                                                       *
+// * This header declares the classes needed to construct the structure  *
+// * of the detector.                                                    *
+// ***********************************************************************
+
+
+#ifndef G4MD_DetectorConstruction_h
+#define G4MD_DetectorConstruction_h 1
+
+#include <G4VUserDetectorConstruction.hh>
+#include <globals.hh>
+#include <vector.h>
+
+class G4Box;
+class G4LogicalVolume;
+class G4VPhysicalVolume;
+class G4Material;
+class G4MD_DetectorMessenger;
+
+class G4MD_DetectorConstruction : public G4VUserDetectorConstruction
+{
+  
+public:
+  
+  G4MD_DetectorConstruction();
+  ~G4MD_DetectorConstruction();
+  
+  G4VPhysicalVolume* Construct();
+  
+  //void UpdateGeometry();
+  
+
+private:
+
+  void DefineParameters();  
+  //void DefineMaterials();
+  
+  G4MD_DetectorMessenger* detectorMessenger;  
+  
+  
+  // Experiment Volume 
+  // -----------------
+  G4double fExpVol_x;
+  G4double fExpVol_y;
+  G4double fExpVol_z;
+  
+  
+  // expVol setup
+  // ------------
+  G4double fExpVolX;
+  G4double fExpVolY;
+  G4double fAirThickness;
+  G4double fSoilThickness;
+   
+  
+  // Tank setup
+  //-----------
+  G4double fTankRadius;    
+  G4double fTankHalfHeight;
+  G4double fTankThickness;
+  G4double fTyvekThickness;
+  
+  G4int npmtx;
+  G4int npmty;
+  
+  
+  // PMT setup
+  //----------
+  G4double fInterfaceThickness;
+  
+  G4double fDomeRadius; //
+  G4double fActiveArea;   
+  G4double fFaceRadius;
+  
+  G4double fPmtInsideRmin;
+  G4double fPmtInsideRmax;
+  
+  G4double fPmtRmin;
+  G4double fPmtRmax;
+  
+  G4double fDomeRmin; //
+  G4double fDomeRmax; //
+  
+  G4double fMinPhi;
+  G4double fMaxPhi;
+  G4double fMinTheta;
+  G4double fMaxTheta;
+  
+  
+  // Optical properties of PMT 
+  //--------------------------
+  vector<double> fPP;
+  
+  vector<double> fPmtfaceRINDEX;
+  vector<double> fPmtfaceABSORPTION;
+  
+  vector<double> fInterfaceRINDEX; 
+  vector<double> fInterfaceABSORPTION;
+  
+  vector<double> fPmtdomeRINDEX; //
+  vector<double> fPmtdomeABSORPTION; //
+  
+  
+  // Optical properties of Tyvek liner
+  //----------------------------------
+
+  vector<double> fPP_LINER_SURFACE;
+  /*  Sigma_alpha.  This characterizes the roughness of the tyvek
+      lining the walls. (Note same value used for top and walls)
+      Value for this is determined from the tyvek program.
+      currently same for side and bottom walls  */
+  G4double fSIGMA_ALPHA; 
+  
+  /*  Reflectivity for liner vs. momentum
+      (Tyvek reflectivity numbers are from School of Physical Sciences,
+      UC Irvine, Technical Report SOC-R950-001-0195)
+      We assume that the shape can be scaled up and down by varying
+      the maximum reflectivity   */
+  G4double fRscale;    
+  vector<double> fLinerREFLECTIVITY;
+  
+  vector<double> fLinerSPECULARLOBECONSTANT;   
+  vector<double> fLinerSPECULARSPIKECONSTANT;
+  vector<double> fLinerBACKSCATTERCONSTANT;
+  
+  
+  /*  Tyvek Refractive Index on liner surface vs. momentum
+      (NOTE: refractive index is set to zero for the 
+      following reason.  The only surfaces that work 
+      with the unified model are ground and
+      groundbackpainted (others are limited to either
+      purely specular or Lambertian reflection.)  Both
+      ground and groundbackpainted necessarily calculate
+      transmissin coefficients based on index of refraction
+      of the next material.  For groundbackpainted, you
+      are allowd to define a 'thin' layer of dielectric
+      between the ground surface and the painted one.	
+      If this is defined to be zero, then all the photons
+      undergo total internal reflection from the ground
+      surface and the unfied model is used.  Note that
+      this is a kludge, and the author of this code 
+      needs to be contacted to discuss providing some
+      additional flexibility in the optical model.  */
+  vector<double> fLinerTYVEK_RINDEX;
+  vector<double> fLinerABSORPTION;
+  
+  
+  // Optical properties of water
+  // ---------------------------
+  vector<double> fPP_WATER;  
+  /*  Water absorption length vs. momentum
+      The shape here is taken from Surface Optics Corp., Report S0C-R950-001-0195
+      on absorption length of ocean water. The scale is set to get an effective 
+      decay time for the signal of about 50ns. This shape is the same use in AGASIM
+      as reported in GAP-97-004	 */
+  
+  G4double fMaxWA;      
+  vector<double> fWaterABSORPTION;
+  
+  vector<double> fWaterRINDEX;    
+  
+};
+
+
+#endif
+

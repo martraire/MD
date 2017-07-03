@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE document SYSTEM "generator.dtd">
+<!-- mode(int) = 0: fixed position and direction (x,y,z) +(px,py,pz)       -->
+<!--                      input site/direction/energy/particle             -->
+<!--                      gamma                                            -->
+<!--                      electron                                         -->
+<!--                      muon                                             -->
+<!--                                                                       -->
+<!-- mode(int) = 1: free site and direction (x,y,z) +(px,py,pz)            -->
+<!--                     input energy/particle                             -->
+<!-- mode(int) = 2: VEM  muon vertical, energy = 1GeV                      -->
+
+
+<document>
+
+<generatorParameters>
+
+  <Mode> 1 </Mode>
+  <numberOfParticles> 1 </numberOfParticles>
+  <particleName> mu- </particleName>
+  <particleEnergy unit="GeV"> 1.0 </particleEnergy>
+  <particleX unit="m"> 0.0 </particleX> 
+  <particleY unit="m"> 0.0 </particleY> 
+  <particleZ unit="m"> 1.0 </particleZ> 
+  <particlePX> 0.0 </particlePX>
+  <particlePY> 0.0 </particlePY>
+  <particlePZ> -1.0 </particlePZ>
+  <particleTheta> 0.0 </particleTheta>
+  <particlePhi> 0.0 </particlePhi>
+  <particleTime unit="ns"> 0.0 </particleTime>
+  <energyminimum unit="MeV"> 1.e2 </energyminimum>
+  <energymaximum unit="MeV"> 1.e6 </energymaximum>
+  <electronindex> -2.5 </electronindex>
+  <gammaindex> -1.8 </gammaindex>
+
+</generatorParameters>
+
+</document>

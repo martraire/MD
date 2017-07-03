@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE document SYSTEM "electronics.dtd">
+
+<document>
+
+<electronicsParameters>
+<!-- in nanoseconds -->
+    <binWidth>     1       </binWidth>
+    <maximumTime>  1000    </maximumTime>
+
+    <MAXTIMEBINPHOTOEL> 20000  </MAXTIMEBINPHOTOEL>
+    <SIGMAGAUSS>  2.55   </SIGMAGAUSS>
+    <CHARGETOCURRENT> 1.6e-10 </CHARGETOCURRENT>
+    <LOADIMPEDANCE> 50 </LOADIMPEDANCE>
+    <PMGAIN> 2.0e5  </PMGAIN>
+    <DYNODEAMP> 32  </DYNODEAMP>
+    <FETIMECONSTANT> 8 </FETIMECONSTANT>
+    <SAMPLINGPERIOD> 25 </SAMPLINGPERIOD>
+    <NBFADCCHANNEL> 1024 </NBFADCCHANNEL>
+    <MAXVOLTAGE> 2 </MAXVOLTAGE>
+  
+</electronicsParameters>
+
+</document>

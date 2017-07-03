@@ -1,0 +1,139 @@
+// ********************************************************************
+// * MDCalib.cc                                                       *
+// *                                                                  *
+// * Date : 15 June 2015                                              *
+// * Author : Diane Martraire (IHEP)                                  *
+// *                                                                  *
+// * Description :                                                    *
+// * This  file is the main program which control other codes in      *
+// * include and src directories.                                     *
+// ********************************************************************
+
+#include <G4RunManager.hh>
+#include <G4UImanager.hh>
+#include <G4UIterminal.hh>
+#include <G4UItcsh.hh>
+#include <G4ios.hh>
+// #include <g4root.hh>
+// #include <TROOT.h>
+
+#include <G4MD_DetectorConstruction.hh>
+#include <G4MD_PhysicsList.hh>
+#include <G4MD_PrimaryGeneratorAction.hh>
+#include <G4MD_TrackingAction.hh>
+#include <G4MD_SteppingAction.hh>
+// #include <G4MD_SteppingVerbose.hh>
+#include <G4MD_EventAction.hh>
+#include <G4MD_RunAction.hh>
+
+#include <Reader.h>
+#include <OutputHandler.h>  //-> besoin du MDEvent.h
+
+#ifdef G4VIS_USE
+#include <G4VisExecutive.hh>
+#endif
+
+#ifdef G4UI_USE
+#include <G4UIExecutive.hh>
+#endif
+
+#include <fstream>
+#include <Randomize.hh>
+#include <TTree.h>
+#include <TFile.h>
+#include <TH1D.h>
+
+using namespace std;
+
+G4int NUM;
+ifstream inputfile;
+
+int main(int argc,char** argv)
+{
+  if (argc!=3) 
+    {
+      G4cout << " ---- > [./program] [Nevents] [root outputfile]" << G4endl;
+      return 0;
+    }
+  
+  
+  // Construct the default run manager
+  // ---------------------------------
+  G4RunManager* runManager = new G4RunManager;
+
+  
+  // Set mandatory initialization classes
+  // ------------------------------------
+  G4MD_DetectorConstruction* detector = new G4MD_DetectorConstruction;
+  runManager->SetUserInitialization(detector);
+
+  G4VUserPhysicsList* physics = new G4MD_PhysicsList;
+  runManager->SetUserInitialization(physics);
+    
+  // Initialize visualization
+  // ------------------------
+#ifdef G4VIS_USE
+  G4VisManager* visManager = new G4VisExecutive;
+  visManager->Initialize();
+#endif
+
+  // G4MD_CorsikaRead &CorsikaFile (G4MD_CorsikaRead::GetCorsikaFile() );
+  // CorsikaFile.OpenInputFile(argv[1]);
+  // CorsikaFile.PrintRunHeader();
+  // G4int Nstart=0, Nend=atoi(argv[2]);
+  // G4cout << "argc[2] = " << argv[2] << G4endl;
+ 
+  
+  // Set user action classes
+  // -----------------------
+  G4VUserPrimaryGeneratorAction* gen_action = new G4MD_PrimaryGeneratorAction();
+  runManager->SetUserAction(gen_action);
+
+  G4MD_TrackingAction* tracking_action = new G4MD_TrackingAction;
+  runManager->SetUserAction(tracking_action);
+
+  G4MD_SteppingAction* stepping_action = new G4MD_SteppingAction;
+  runManager->SetUserAction(stepping_action);  
+  
+  G4MD_EventAction* event_action = new G4MD_EventAction;
+  runManager->SetUserAction(event_action);
+  
+  G4MD_RunAction* run_action = new G4MD_RunAction;  
+  runManager->SetUserAction(run_action);
+  
+  
+  // Initialize G4 kernel
+  // --------------------
+  runManager->Initialize();
+  
+
+  // Get the pointer to the User Interface manager
+  // ---------------------------------------------
+  G4UImanager*  UI = G4UImanager::GetUIpointer(); 
+#ifdef G4VIS_USE 
+  UI->ApplyCommand("/control/execute vis.mac");
+#endif
+  //runManager->BeamOn(NUM);
+  G4int nevents = atoi(argv[1]);
+  G4cout <<" nevents = " << nevents << G4endl;
+  
+  OutputHandler* out = OutputHandler::GetInstance();
+  out->OpenFile(argv[2]);
+  
+  for (G4int i=0; i<nevents; i++) {
+    runManager->BeamOn(1);
+  }
+  
+  out->CloseFile();
+  
+  
+  // Job termination
+  // ---------------
+#ifdef G4VIS_USE
+  delete visManager;
+#endif                
+
+  delete runManager;
+  return 0;
+}
+

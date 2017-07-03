@@ -1,0 +1,25 @@
+/run/verbose 2
+/vis/scene/create
+/vis/open DAWNFILE
+/vis/sceneHandler/create DAWNFILE
+/vis/sceneHandler/attach
+/vis/viewer/create ! ! 600
+/vis/viewer/flush
+/vis/viewer/refresh viewer-0
+/vis/scene/notifyHandlers
+/vis/viewer/update viewer-0
+/vis/drawVolume
+/vis/scene/create
+/vis/scene/add/volume world
+/vis/scene/notifyHandlers
+/vis/sceneHandler/attach
+/vis/viewer/set/viewpointThetaPhi 90. 0. deg
+/vis/viewer/zoom 1.0
+/vis/viewer/set/style wireframe
+/tracking/storeTrajectory 0
+/vis/scene/add/trajectories
+/tracking/storeTrajectory 1
+/vis/scene/notifyHandlers
+/vis/scene/endOfEventAction accumulate
+/event/verbose 1
+/tracking/verbose 0

@@ -1,0 +1,111 @@
+<?xml encoding="ISO-8859-1"?>
+
+<!ELEMENT document (waterpool,concrete,tank,pmtarray,pmtProperty,water,liner)>
+
+<!ELEMENT waterpool (PoolHalfX1, PoolHalfY1, PoolHalfX2,PoolHalfY2,PoolHalfZ)>
+
+<!ELEMENT PoolHalfX1 (#PCDATA)>
+<!ATTLIST PoolHalfX1 unit CDATA #REQUIRED>
+
+<!ELEMENT PoolHalfY1 (#PCDATA)>
+<!ATTLIST PoolHalfY1 unit CDATA #REQUIRED>
+
+<!ELEMENT PoolHalfX2 (#PCDATA)>
+<!ATTLIST PoolHalfX2 unit CDATA #REQUIRED>
+
+<!ELEMENT PoolHalfY2 (#PCDATA)>
+<!ATTLIST PoolHalfY2 unit CDATA #REQUIRED>
+
+<!ELEMENT PoolHalfZ (#PCDATA)>
+<!ATTLIST PoolHalfZ unit CDATA #REQUIRED>
+
+<!ELEMENT concrete (thickness)>
+<!ELEMENT thickness (#PCDATA)>
+<!ATTLIST thickness unit CDATA #REQUIRED>
+
+<!ELEMENT tank (tankHalfDepth, tankRadius, tankHalfHeight, tankThickness)>
+
+<!ELEMENT tankHalfDepth (#PCDATA)>
+<!ATTLIST tankHalfDepth unit CDATA #REQUIRED>
+
+<!ELEMENT tankRadius (#PCDATA)>
+<!ATTLIST tankRadius unit CDATA #REQUIRED>
+
+<!ELEMENT tankHalfHeight (#PCDATA)>
+<!ATTLIST tankHalfHeight unit CDATA #REQUIRED>
+
+<!ELEMENT tankThickness (#PCDATA)>
+<!ATTLIST tankThickness unit CDATA #REQUIRED>
+
+<!ELEMENT pmtarray (pmtx, pmty)>
+
+<!ELEMENT pmtx (#PCDATA)>
+
+<!ELEMENT pmty (#PCDATA)>
+
+<!ELEMENT pmtProperty (pmt_momentum_bins, pmtface_Rindex, pmtface_AbsLength, 
+	               interface_Rindex, interface_AbsLength, 
+		       dome_Rindex, dome_AbsLength,
+	               min_cerenkov_energy, max_cerenkov_energy, cerenkov_energy,
+	               maxQE, QE, collection_efficiency)>
+
+<!ELEMENT pmt_momentum_bins (#PCDATA)>
+<!ATTLIST pmt_momentum_bins unit CDATA #REQUIRED>
+
+<!ELEMENT pmtface_Rindex (#PCDATA)>
+<!ELEMENT pmtface_AbsLength (#PCDATA)>
+<!ATTLIST pmtface_AbsLength unit CDATA #REQUIRED>
+
+<!ELEMENT interface_Rindex (#PCDATA)>
+<!ELEMENT dome_Rindex (#PCDATA)>
+
+<!ELEMENT interface_AbsLength (#PCDATA)>
+<!ATTLIST interface_AbsLength unit CDATA #REQUIRED>
+
+<!ELEMENT dome_AbsLength (#PCDATA)>
+<!ATTLIST dome_AbsLength unit CDATA #REQUIRED>
+
+<!ELEMENT min_cerenkov_energy (#PCDATA)>
+<!ATTLIST min_cerenkov_energy unit CDATA #REQUIRED>
+
+<!ELEMENT max_cerenkov_energy (#PCDATA)>
+<!ATTLIST max_cerenkov_energy unit CDATA #REQUIRED>
+
+<!ELEMENT cerenkov_energy (#PCDATA)>
+<!ATTLIST cerenkov_energy unit CDATA #REQUIRED>
+
+<!ELEMENT maxQE (#PCDATA)>
+<!ELEMENT QE (#PCDATA)>
+
+<!ELEMENT collection_efficiency (#PCDATA)>
+
+<!ELEMENT water (water_momentumBins, maxWaterAbsLength, water_AbsLength, water_Rindex)>
+
+<!ELEMENT water_momentumBins (#PCDATA)>
+<!ATTLIST water_momentumBins unit CDATA #REQUIRED>
+
+<!ELEMENT maxWaterAbsLength (#PCDATA)>
+<!ATTLIST maxWaterAbsLength unit CDATA #REQUIRED>
+
+<!ELEMENT water_AbsLength (#PCDATA)>
+<!ELEMENT water_Rindex (#PCDATA)>
+
+
+<!ELEMENT liner (sigmaAlpha, maxReflectivity, liner_momentum_bins, reflectivity, 
+                 specularLobe, specularSpike, backScatter, liner_Rindex, liner_AbsLength)>
+
+<!ELEMENT sigmaAlpha (#PCDATA)>
+<!ELEMENT maxReflectivity (#PCDATA)>
+
+<!ELEMENT liner_momentum_bins (#PCDATA)>
+<!ATTLIST liner_momentum_bins unit CDATA #REQUIRED>
+
+<!ELEMENT reflectivity (#PCDATA)>
+<!ELEMENT specularLobe (#PCDATA)>
+<!ELEMENT specularSpike (#PCDATA)>
+<!ELEMENT backScatter (#PCDATA)>
+<!ELEMENT liner_Rindex (#PCDATA)>
+
+<!ELEMENT liner_AbsLength (#PCDATA)>
+<!ATTLIST liner_AbsLength unit CDATA #REQUIRED>
+

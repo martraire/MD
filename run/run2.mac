@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------
+# run1.mac
+#
+# Date : 15 JUne 2015
+# Author : Diane Martraire (IHEP)
+#
+# Description :
+# Macro file for "MDCalib.cc" can be run in batch, without graphic
+# or interactively: Idle> /control/execute run1.mac
+# --------------------------------------------------------------------- 
+#
+/control/verbose 2
+# 
+# electron 30 MeV to the direction (1.,0.,0.)
+# 1 event
+#
+/run/beamOn 1
+#
+# shoot randomly 20 events
+#
+/MD/event/printModulo 5
+/MD/gun/rndm on
+/run/beamOn 20
+#
+# activate/inactivate physic processes
+#
+/process/list
+/process/inactivate eBrem
+#
+/run/beamOn 20
+#
+

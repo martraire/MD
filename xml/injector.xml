@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE document SYSTEM "injector.dtd">
+<!-- mode = 1: VEM & center of the tank , E = 1 GeV            -->
+<!-- mode = 2: VEM & free position , E = 1 GeV                 -->
+<!-- mode = 3: Fixed theta and Energy , free position          -->
+<!-- mode = 4: Free theta and direction (x,y,z) + (px,py,pz)   -->
+<!-- mode = 5: Test using GPS generator                        -->
+
+<document>
+
+<injectorParameters>
+  <numberofparticles> 1 </numberofparticles>
+  <particleName> mu- </particleName>
+  <mode> 3 </mode>
+  <particleEnergy unit="GeV"> 3.0 </particleEnergy>
+  <particleX unit="m"> 0.0 </particleX> 
+  <particleY unit="m"> 0.0 </particleY> 
+  <particleZ unit="m"> 1.0 </particleZ> 
+  <particlePX> 0.0 </particlePX>
+  <particlePY> 0.0 </particlePY>
+  <particlePZ> -1.0 </particlePZ>
+  <particleTheta> 30.0 </particleTheta>
+  <particleTime unit="ns"> 0.0 </particleTime>
+  <energyminimum unit="MeV"> 1.e2 </energyminimum>
+  <energymaximum unit="MeV"> 1.e6 </energymaximum>
+  <electronindex> -2.5 </electronindex>
+  <gammaindex> -1.8 </gammaindex>
+</injectorParameters>
+
+</document>

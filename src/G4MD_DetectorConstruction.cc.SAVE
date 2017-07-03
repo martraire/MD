@@ -1,0 +1,880 @@
+// *********************************************************************
+// * G4MD_DetectorConstruction.cc                                      *
+// *                                                                   *
+// * Date : 15 June 2015                                               *
+// * Author : Diane Martraire (IHEP)                                   *
+// *                                                                   *
+// * Description :                                                     *
+// * This file defines the structure of the Muon Detector (MD) :       *
+// * Materials, geometry, sensitive regions, ...                       *
+// *********************************************************************
+
+#include <G4MD_DetectorConstruction.hh>
+#include <G4MD_DetectorMessenger.hh>
+#include <G4MD_PMTAction.hh>
+
+#include <G4Material.hh>
+//#include <G4MaterialTable.hh>
+//#include <G4Element.hh>
+//#include <G4ElementTable.hh>
+#include <G4Box.hh>
+#include <G4Tubs.hh>
+#include <G4Sphere.hh> 
+#include <G4Trd.hh> 
+
+//#include <G4PVParameterised.hh>
+//#include <G4AssemblyVolume.hh>
+//#include <G4RotationMatrix.hh>
+//#include <G4Transform3D.hh>
+
+#include <G4LogicalVolume.hh>
+#include <G4ThreeVector.hh>
+#include <G4PVPlacement.hh>
+#include <G4SDManager.hh>
+#include <G4GeometryManager.hh>
+#include <G4PhysicalVolumeStore.hh>
+#include <G4LogicalVolumeStore.hh>
+#include <G4SolidStore.hh>
+#include <G4VisAttributes.hh>
+#include <G4RunManager.hh>
+#include <G4Colour.hh>
+#include <G4LogicalBorderSurface.hh>
+#include <G4OpBoundaryProcess.hh>
+
+#include <Reader.h>
+
+
+G4MD_DetectorConstruction::G4MD_DetectorConstruction()
+{
+  // Default parameter values of the tank and PMT
+  DefineParameters();
+  
+  // Materials
+  //DefineMaterials();
+  
+  // create commands for interactive definition of the MD
+  detectorMessenger = new G4MD_DetectorMessenger(this);
+}
+
+
+G4MD_DetectorConstruction::~G4MD_DetectorConstruction()
+{ 
+  delete detectorMessenger;
+}
+
+
+void G4MD_DetectorConstruction::DefineParameters()
+{
+  // Default parameter values of the PMT
+  // -----------------------------------
+  fPmtInsideRmin = 0.*mm;
+  fPmtInsideRmax = 125.*mm; 
+  fFaceRadius = 126.*mm;
+  fInterfaceThickness = 1.*mm;
+  fDomeRadius = 133.*mm;
+  fActiveArea = 530.*cm2;
+  fPmtRmin = fPmtInsideRmax;
+  fPmtRmax = fFaceRadius;
+  
+  fMinPhi = 0.*deg;
+  fMaxPhi = 360.*deg;
+  fMinTheta = 0.*deg;
+  fMaxTheta = 90.*deg; 
+
+
+  // Fetch parameters from XML files
+  // -------------------------------
+  bool validate = false;
+  
+  // Fetch parameters from control file
+  Reader controlReader("xml/control.xml", validate);
+  Branch tB = controlReader.GetTopBranch().GetChild("controlParameters");
+  
+  // Fetch parameters from detector file
+  string detectorFile;
+  tB.GetChild("detectorFile").GetData(detectorFile);
+  Reader reader( detectorFile, validate);
+  Branch topBranch = reader.GetTopBranch();
+  Branch branch;
+  
+  // Fill <tank> data cards
+  // ----------------------
+  G4double poolhalfx1, poolhalfx2, poolhalfy1, poolhalfy2, poolhalfz;
+  
+  branch = topBranch.GetChild("waterpool");
+  branch.GetChild("PoolHalfX1").GetData(poolhalfx1);
+  fPoolHalfX1 = poolhalfx1*m;
+  
+  branch.GetChild("PoolHalfY1").GetData(poolhalfy1);
+  fPoolHalfY1 = poolhalfy1*m;
+  
+  branch.GetChild("PoolHalfX2").GetData(poolhalfx2);
+  fPoolHalfX2 = poolhalfx2*m;
+  
+  branch.GetChild("PoolHalfY2").GetData(poolhalfy2);
+  fPoolHalfY2 = poolhalfy2*m;
+  
+  branch.GetChild("PoolHalfZ").GetData(poolhalfz);
+  fPoolHalfZ = poolhalfz*m;
+  
+  branch = topBranch.GetChild("concrete");
+  G4double thickness;
+  branch.GetChild("thickness").GetData(thickness);
+  fCThickness = thickness*m;
+  
+  branch = topBranch.GetChild("tank");
+  
+  G4double tankHalfDepth;
+  G4double tankRadius;
+  G4double tankHalfHeight;
+  G4double tankThickness;
+  
+  branch.GetChild("tankHalfDepth").GetData(tankHalfDepth);
+  fTankHalfDepth = tankHalfDepth*m;
+  
+  branch.GetChild("tankRadius").GetData(tankRadius);
+  fTankRadius = tankRadius*m;
+  
+  branch.GetChild("tankHalfHeight").GetData(tankHalfHeight);
+  fTankHalfHeight = tankHalfHeight*m;
+  
+  branch.GetChild("tankThickness").GetData(tankThickness);
+  fTankThickness = tankThickness*m;
+  
+  // Fill <pmtPosition> data cards
+  // -----------------------------
+  branch = topBranch.GetChild("pmtarray");
+  
+  G4int pmtx, pmty;
+  branch.GetChild("pmtx").GetData(pmtx);
+  npmtx = pmtx;
+  
+  branch.GetChild("pmty").GetData(pmty);
+  npmty = pmty;
+  
+  // Fill <pmtProperty> data cards    
+  // -----------------------------
+  branch = topBranch.GetChild("pmtProperty");
+  
+  vector<double> pmt_momentum_bins;
+  vector<double> pmtface_Rindex;
+  vector<double> pmtface_AbsLength;
+  vector<double> interface_Rindex;
+  vector<double> interface_AbsLength; 
+  vector<double> dome_Rindex;
+  vector<double> dome_AbsLength;
+  
+  branch.GetChild("pmt_momentum_bins").GetData(pmt_momentum_bins);
+  fPP = pmt_momentum_bins;
+  
+  branch.GetChild("pmtface_Rindex").GetData(pmtface_Rindex);
+  fPmtfaceRINDEX = pmtface_Rindex;
+  
+  branch.GetChild("pmtface_AbsLength").GetData(pmtface_AbsLength);
+  fPmtfaceABSORPTION = pmtface_AbsLength;
+  
+  branch.GetChild("interface_Rindex").GetData(interface_Rindex);
+  fInterfaceRINDEX = interface_Rindex;
+  
+  branch.GetChild("interface_AbsLength").GetData(interface_AbsLength);
+  fInterfaceABSORPTION = interface_AbsLength;
+  
+  branch.GetChild("dome_Rindex").GetData(dome_Rindex);
+  fPmtdomeRINDEX = dome_Rindex;
+  
+  branch.GetChild("dome_AbsLength").GetData(dome_AbsLength);
+  fPmtdomeABSORPTION = dome_AbsLength;
+  
+  // Fill <water> data cards
+  branch = topBranch.GetChild("water");
+  
+  G4double maxWaterAbsLength;
+  vector<double> water_momentumBins;
+  vector<double> water_AbsLength;
+  vector<double> water_Rindex;
+  
+  branch.GetChild("maxWaterAbsLength").GetData(maxWaterAbsLength);
+  fMaxWA = maxWaterAbsLength*m;
+  
+  branch.GetChild("water_momentumBins").GetData(water_momentumBins);
+  fPP_WATER = water_momentumBins;
+  
+  branch.GetChild("water_AbsLength").GetData(water_AbsLength);
+  fWaterABSORPTION = water_AbsLength;
+  
+  vector<double>::iterator waterIt = fWaterABSORPTION.begin(); 
+  while ( waterIt != fWaterABSORPTION.end() ) 
+    {
+      (*waterIt) = (*waterIt)*fMaxWA;
+      waterIt++;      
+    }
+  
+  branch.GetChild("water_Rindex").GetData(water_Rindex);
+  fWaterRINDEX = water_Rindex;	
+  
+  // Fill <liner> data cards
+  // -----------------------
+  branch = topBranch.GetChild("liner");
+  
+  G4double sigmaAlpha;
+  G4double maxReflectivity;
+  
+  branch.GetChild("sigmaAlpha").GetData(sigmaAlpha);
+  fSIGMA_ALPHA = sigmaAlpha;
+  
+  branch.GetChild("maxReflectivity").GetData(maxReflectivity);
+  fRscale = maxReflectivity;  
+  
+  vector<double> liner_momentum_bins;
+  vector<double> reflectivity;    
+  vector<double> specularLobe;
+  vector<double> specularSpike;
+  vector<double> backScatter;
+  vector<double> liner_Rindex;
+  vector<double> liner_AbsLength;
+  
+  branch.GetChild("liner_momentum_bins").GetData(liner_momentum_bins);
+  fPP_LINER_SURFACE = liner_momentum_bins;
+  
+  branch.GetChild("reflectivity").GetData(reflectivity);
+  fLinerREFLECTIVITY = reflectivity;
+  
+  vector<double>::iterator linerIt = fLinerREFLECTIVITY.begin(); 
+  while ( linerIt != fLinerREFLECTIVITY.end() ) 
+    {
+      (*linerIt) = (*linerIt)*fRscale;
+      linerIt++;      
+    }
+  
+  branch.GetChild("specularLobe").GetData(specularLobe);
+  fLinerSPECULARLOBECONSTANT = specularLobe;
+  
+  branch.GetChild("specularSpike").GetData(specularSpike);
+  fLinerSPECULARSPIKECONSTANT = specularSpike;
+  
+  branch.GetChild("backScatter").GetData(backScatter);
+  fLinerBACKSCATTERCONSTANT = backScatter;
+  
+  branch.GetChild("liner_Rindex").GetData(liner_Rindex);
+  fLinerTYVEK_RINDEX = liner_Rindex;
+  
+  branch.GetChild("liner_AbsLength").GetData(liner_AbsLength);
+  fLinerABSORPTION = liner_AbsLength;   
+}
+
+
+
+// void G4MD_DetectorConstruction::DefineMaterials()
+// { 
+//   vector<double>::iterator It;
+//   G4double PhotonMomentum;
+//   G4int index, num;
+  
+//   G4String symbol;             // a = mass of a mole
+//   G4double a, z, density;      // z = mean number of protons 
+//   G4int iz, n;                 // (iz,n) = number of (protons,nucleons) in an isotope
+//   G4int ncomponents, natoms;
+//   G4double abundance, fractionmass;
+  
+  
+//   // Define Elements 
+//   // ---------------
+//   G4Element* H  = new G4Element("Hydrogen", symbol="H" , z= 1.,  a= 1.01*g/mole);
+//   G4Element* C  = new G4Element("Carbon"  , symbol="C" , z= 6.,  a= 12.01*g/mole);
+//   G4Element* N  = new G4Element("Nitrogen", symbol="N" , z= 7.,  a= 14.01*g/mole);
+//   G4Element* O  = new G4Element("Oxygen"  , symbol="O" , z= 8.,  a= 16.00*g/mole);
+//   G4Element* Si = new G4Element("Silicon" , symbol="Si", z= 14., a= 28.09*g/mole);
+//   G4Element* Al = new G4Element("Aluminum", symbol="Al", z= 13., a= 29.98*g/mole);     
+//   G4Element* Fe = new G4Element("Iron"    , symbol="Fe", z= 26., a= 55.85*g/mole);
+//   G4Element* B  = new G4Element("Boron"   , symbol="B" , z= 5.,  a= 10.81*g/mole);
+//   G4Element* Na = new G4Element("Sodium"  , symbol="Na", z= 11., a= 22.98977*g/mole); 
+  
+//   new G4Material("Lead", z= 82., a= 207.19*g/mole, density= 11.35*g/cm3);
+
+  
+//   // Vacuum
+//   // ------
+//   G4Material* Vacuum = new G4Material("Vacuum", z= 1., a= 1.*g/mole, density= universe_mean_density, kStateUndefined, STP_Temperature, STP_Pressure);
+  
+  
+//   // Air composed of 70% of N + 30% of O2
+//   // ------------------------------------
+//   G4Material* Air = new G4Material("Air", density= 1.290*mg/cm3, ncomponents= 2);
+//   Air->AddElement(N, fractionmass= 0.7);
+//   Air->AddElement(O, fractionmass= 0.3);
+  
+//   // Add Material Properties Table (MPT) for Air
+//   G4double airPP[2] = {2.08*eV, 4.20*eV};
+//   G4double airRINDEX[2] = {1.000273, 1.000273};
+//   G4double airABSLENGTH[2] = {10000*m, 10000*m};
+  
+//   G4MaterialPropertiesTable* airMPT = new G4MaterialPropertiesTable();
+//   airMPT->AddProperty("RINDEX",    airPP, airRINDEX,     2);
+//   airMPT->AddProperty("ABSLENGTH", airPP, airABSLENGTH,  2);
+  
+//   Air->SetMaterialPropertiesTable(airMPT);
+//   //cout<<"Air Material Properties:"<<airMPT->DumpTable()<<endl;
+  
+  
+//   // Soil : 51% O + 35.2% Si + 8.2% Al + 5.6% Fe 
+//   // -------------------------------------------
+//   G4Material* Soil = new G4Material("Soil", density= 1.8*g/cm3, ncomponents=4);
+//   Soil->AddElement(O , fractionmass= 51.0*perCent);
+//   Soil->AddElement(Si, fractionmass= 35.2*perCent);
+//   Soil->AddElement(Al, fractionmass= 8.2*perCent);
+//   Soil->AddElement(Fe, fractionmass= 5.6*perCent);
+
+  
+//   // Concrete for the structure of the tank : 100% Si02 (first order)
+//   // ----------------------------------------------------------------
+//   G4Material* SiO2 = new G4Material("SiO2", density= 2.23*g/cm3, ncomponents= 2);
+//   SiO2->AddElement(Si, natoms=1);
+//   SiO2->AddElement(O , natoms=2);
+  
+//   G4Material* Concrete =  new G4Material("Concrete", density= 2.5*g/cm3, ncomponents= 1);
+//   Concrete->AddMaterial(SiO2, fractionmass= 100.0*perCent);
+  
+  
+//   // HDPE (PolyEthylene) for the tyvek inside the tank : C2H4 (N.B: tyvek = liner ~ HDPE)
+//   // ------------------------------------------------------------------------------------
+//   G4Material* HDPE = new G4Material("HDPE", density= 0.94*g/cm3, ncomponents= 2);
+//   HDPE->AddElement(C, natoms=2);
+//   HDPE->AddElement(H, natoms=4);
+  
+//   // Add MPT for HDPE (tyvek)
+//   G4MaterialPropertiesTable* linerMPT = new G4MaterialPropertiesTable();
+//   index = 0;
+//   num = fPP_LINER_SURFACE.size();
+//   //double array_ppLINER[num];
+//   //double array_linerABSORPTION[num];
+//   G4double array_ppLINER[10000];
+//   G4double array_linerABSORPTION[10000];
+  
+//   for (It = fPP_LINER_SURFACE.begin(); It != fPP_LINER_SURFACE.end(); It++) {
+//     PhotonMomentum = (*It)*eV;
+//     array_ppLINER[index] = PhotonMomentum;
+//     array_linerABSORPTION[index] = fLinerABSORPTION[index]*m;
+//     index++;
+//   }
+  
+//   linerMPT->AddProperty("ABSLENGTH", array_ppLINER, array_linerABSORPTION, num);
+  
+//   HDPE->SetMaterialPropertiesTable(linerMPT);
+//   //cout<<"Liner Material Properties:"<<linerMPT->DumpTable()<<endl;
+  
+  
+//   // Water
+//   // -----
+//   G4Material* Water = new G4Material("Water", density= 1.000*g/cm3, ncomponents= 2);
+//   Water->AddElement(H, natoms=2);
+//   Water->AddElement(O, natoms=1);
+  
+//   // Add MPT for Water
+//   G4MaterialPropertiesTable* waterMPT = new G4MaterialPropertiesTable();
+//   index = 0;    
+//   num = fPP_WATER.size();
+//   //double array_ppWATER[num]; // pp -> cherenkov
+//   //double array_waterRINDEX[num];
+//   //double array_waterABSORPTION[num];
+//   G4double array_ppWATER[10000];
+//   G4double array_waterRINDEX[10000];
+//   G4double array_waterABSORPTION[10000];
+  
+//   for (It = fPP_WATER.begin(); It != fPP_WATER.end(); It++) {
+//     PhotonMomentum = (*It)*eV;
+//     array_ppWATER[index] = PhotonMomentum;
+//     array_waterRINDEX[index] = fWaterRINDEX[index];
+//     array_waterABSORPTION[index] = fWaterABSORPTION[index];
+//     index++;
+//   }
+  
+//   waterMPT->AddProperty("RINDEX", array_ppWATER, array_waterRINDEX, num);
+//   waterMPT->AddProperty("ABSLENGTH",array_ppWATER,array_waterABSORPTION, num);
+  
+//   Water->SetMaterialPropertiesTable(waterMPT);
+//   //cout<<"Water Material Properties:"<<waterMPT->DumpTable()<<endl;
+  
+  
+//   // Pyrex (Borosilicate) for PMT glass : 80% SiO2 + 13% B2O2 + 7% Na2O
+//   // ------------------------------------------------------------------
+//   G4Material* B2O2 = new G4Material("B2O2", density= 2.23*g/cm3, ncomponents= 2);
+//   B2O2->AddElement(B, natoms=2);
+//   B2O2->AddElement(O, natoms=2);
+  
+//   G4Material* Na2O = new G4Material("Na2O", density= 2.23*g/cm3, ncomponents= 2);
+//   Na2O->AddElement(Na, natoms=2);
+//   Na2O->AddElement(O , natoms=1);
+
+//   G4Material* Pyrex = new G4Material("Pyrex", density= 2.23*g/cm3, ncomponents= 3);
+//   Pyrex->AddMaterial(SiO2, fractionmass= 0.80);
+//   Pyrex->AddMaterial(B2O2, fractionmass= 0.13);
+//   Pyrex->AddMaterial(Na2O, fractionmass= 0.07);  
+
+//   // Add MPT for Pyrex
+//   G4MaterialPropertiesTable* pmtfaceMPT = new G4MaterialPropertiesTable();
+//   index = 0;
+//   num = fPP.size();
+//   //double array_ppFACE[num];
+//   //double array_pmtfaceRINDEX[num];
+//   //double array_pmtfaceABSORPTION[num];
+//   G4double array_ppFACE[10000];
+//   G4double array_pmtfaceRINDEX[10000];
+//   G4double array_pmtfaceABSORPTION[10000];
+  
+//   for (It = fPP.begin(); It != fPP.end(); It++) {
+//     PhotonMomentum = (*It)*eV;
+//     array_ppFACE[index] = PhotonMomentum;
+//     array_pmtfaceRINDEX[index] = fPmtfaceRINDEX[index];
+//     array_pmtfaceABSORPTION[index] = fPmtfaceABSORPTION[index]*m;
+//     index++;
+//   }
+  
+//   pmtfaceMPT->AddProperty("RINDEX", array_ppFACE, array_pmtfaceRINDEX, num);  
+//   pmtfaceMPT->AddProperty("ABSLENGTH", array_ppFACE, array_pmtfaceABSORPTION, num);
+  
+//   Pyrex->SetMaterialPropertiesTable(pmtfaceMPT);
+//   //cout<<"PMT Face Material Properties:"<<pmtfaceMPT->DumpTable()<<endl;
+  
+//   // ATTENTION : J'ai viré toutes histoires d'interface et de lucite (dome) !!!!!!!
+    
+// }
+// 
+
+
+G4VPhysicalVolume* G4MD_DetectorConstruction::Construct()
+{
+  // Clean old geometry, if any
+  G4GeometryManager::GetInstance()->OpenGeometry();
+  G4PhysicalVolumeStore::GetInstance()->Clean();
+  G4LogicalVolumeStore::GetInstance()->Clean();
+  G4SolidStore::GetInstance()->Clean();
+
+  // Define MD parameters ???
+  // DefineParameters();
+  
+  // ------------------------------------------------------------------------------------
+   vector<double>::iterator It;
+  G4double PhotonMomentum;
+  G4int index, num;
+  
+  G4String symbol;             // a = mass of a mole
+  G4double a, z, density;      // z = mean number of protons 
+  G4int iz, n;                 // (iz,n) = number of (protons,nucleons) in an isotope
+  G4int ncomponents, natoms;
+  G4double abundance, fractionmass;
+  
+  
+  // Define Elements 
+  // ---------------
+  G4Element* H  = new G4Element("Hydrogen", symbol="H" , z= 1.,  a= 1.01*g/mole);
+  G4Element* C  = new G4Element("Carbon"  , symbol="C" , z= 6.,  a= 12.01*g/mole);
+  G4Element* N  = new G4Element("Nitrogen", symbol="N" , z= 7.,  a= 14.01*g/mole);
+  G4Element* O  = new G4Element("Oxygen"  , symbol="O" , z= 8.,  a= 16.00*g/mole);
+  G4Element* Si = new G4Element("Silicon" , symbol="Si", z= 14., a= 28.09*g/mole);
+  G4Element* Al = new G4Element("Aluminum", symbol="Al", z= 13., a= 29.98*g/mole);     
+  G4Element* Fe = new G4Element("Iron"    , symbol="Fe", z= 26., a= 55.85*g/mole);
+  G4Element* B  = new G4Element("Boron"   , symbol="B" , z= 5.,  a= 10.81*g/mole);
+  G4Element* Na = new G4Element("Sodium"  , symbol="Na", z= 11., a= 22.98977*g/mole); 
+  
+  new G4Material("Lead", z= 82., a= 207.19*g/mole, density= 11.35*g/cm3);
+
+  
+  // Vacuum
+  // ------
+  G4Material* Vacuum = new G4Material("Vacuum", z= 1., a= 1.*g/mole, density= universe_mean_density, kStateUndefined, STP_Temperature, STP_Pressure);
+  
+  
+  // Air composed of 70% of N + 30% of O2
+  // ------------------------------------
+  G4Material* Air = new G4Material("Air", density= 1.290*mg/cm3, ncomponents= 2);
+  Air->AddElement(N, fractionmass= 0.7);
+  Air->AddElement(O, fractionmass= 0.3);
+  
+  // Add Material Properties Table (MPT) for Air
+  G4double airPP[2] = {2.08*eV, 4.20*eV};
+  G4double airRINDEX[2] = {1.000273, 1.000273};
+  G4double airABSLENGTH[2] = {10000*m, 10000*m};
+  
+  G4MaterialPropertiesTable* airMPT = new G4MaterialPropertiesTable();
+  airMPT->AddProperty("RINDEX",    airPP, airRINDEX,     2);
+  airMPT->AddProperty("ABSLENGTH", airPP, airABSLENGTH,  2);
+  
+  Air->SetMaterialPropertiesTable(airMPT);
+  //cout<<"Air Material Properties:"<<airMPT->DumpTable()<<endl;
+  
+  
+  // Soil : 51% O + 35.2% Si + 8.2% Al + 5.6% Fe 
+  // -------------------------------------------
+  G4Material* Soil = new G4Material("Soil", density= 1.8*g/cm3, ncomponents=4);
+  Soil->AddElement(O , fractionmass= 51.0*perCent);
+  Soil->AddElement(Si, fractionmass= 35.2*perCent);
+  Soil->AddElement(Al, fractionmass= 8.2*perCent);
+  Soil->AddElement(Fe, fractionmass= 5.6*perCent);
+
+  
+  // Concrete for the structure of the tank : 100% Si02 (first order)
+  // ----------------------------------------------------------------
+  G4Material* SiO2 = new G4Material("SiO2", density= 2.23*g/cm3, ncomponents= 2);
+  SiO2->AddElement(Si, natoms=1);
+  SiO2->AddElement(O , natoms=2);
+  
+  G4Material* Concrete =  new G4Material("Concrete", density= 2.5*g/cm3, ncomponents= 1);
+  Concrete->AddMaterial(SiO2, fractionmass= 100.0*perCent);
+  
+  
+  // HDPE (PolyEthylene) for the tyvek inside the tank : C2H4 (N.B: tyvek = liner ~ HDPE)
+  // ------------------------------------------------------------------------------------
+  G4Material* HDPE = new G4Material("HDPE", density= 0.94*g/cm3, ncomponents= 2);
+  HDPE->AddElement(C, natoms=2);
+  HDPE->AddElement(H, natoms=4);
+  
+  // Add MPT for HDPE (tyvek)
+  G4MaterialPropertiesTable* linerMPT = new G4MaterialPropertiesTable();
+  index = 0;
+  num = fPP_LINER_SURFACE.size();
+  //double array_ppLINER[num];
+  //double array_linerABSORPTION[num];
+  G4double array_ppLINER[10000];
+  G4double array_linerABSORPTION[10000];
+  
+  for (It = fPP_LINER_SURFACE.begin(); It != fPP_LINER_SURFACE.end(); It++) {
+    PhotonMomentum = (*It)*eV;
+    array_ppLINER[index] = PhotonMomentum;
+    array_linerABSORPTION[index] = fLinerABSORPTION[index]*m;
+    index++;
+  }
+  
+  linerMPT->AddProperty("ABSLENGTH", array_ppLINER, array_linerABSORPTION, num);
+  
+  HDPE->SetMaterialPropertiesTable(linerMPT);
+  //cout<<"Liner Material Properties:"<<linerMPT->DumpTable()<<endl;
+  
+  
+  // Water
+  // -----
+  G4Material* Water = new G4Material("Water", density= 1.000*g/cm3, ncomponents= 2);
+  Water->AddElement(H, natoms=2);
+  Water->AddElement(O, natoms=1);
+  
+  // Add MPT for Water
+  G4MaterialPropertiesTable* waterMPT = new G4MaterialPropertiesTable();
+  index = 0;    
+  num = fPP_WATER.size();
+  //double array_ppWATER[num]; // pp -> cherenkov
+  //double array_waterRINDEX[num];
+  //double array_waterABSORPTION[num];
+  G4double array_ppWATER[10000];
+  G4double array_waterRINDEX[10000];
+  G4double array_waterABSORPTION[10000];
+  
+  for (It = fPP_WATER.begin(); It != fPP_WATER.end(); It++) {
+    PhotonMomentum = (*It)*eV;
+    array_ppWATER[index] = PhotonMomentum;
+    array_waterRINDEX[index] = fWaterRINDEX[index];
+    array_waterABSORPTION[index] = fWaterABSORPTION[index];
+    index++;
+  }
+  
+  waterMPT->AddProperty("RINDEX", array_ppWATER, array_waterRINDEX, num);
+  waterMPT->AddProperty("ABSLENGTH",array_ppWATER,array_waterABSORPTION, num);
+  
+  Water->SetMaterialPropertiesTable(waterMPT);
+  //cout<<"Water Material Properties:"<<waterMPT->DumpTable()<<endl;
+  
+  
+  // Pyrex (Borosilicate) for PMT glass : 80% SiO2 + 13% B2O2 + 7% Na2O
+  // ------------------------------------------------------------------
+  G4Material* B2O2 = new G4Material("B2O2", density= 2.23*g/cm3, ncomponents= 2);
+  B2O2->AddElement(B, natoms=2);
+  B2O2->AddElement(O, natoms=2);
+  
+  G4Material* Na2O = new G4Material("Na2O", density= 2.23*g/cm3, ncomponents= 2);
+  Na2O->AddElement(Na, natoms=2);
+  Na2O->AddElement(O , natoms=1);
+
+  G4Material* Pyrex = new G4Material("Pyrex", density= 2.23*g/cm3, ncomponents= 3);
+  Pyrex->AddMaterial(SiO2, fractionmass= 0.80);
+  Pyrex->AddMaterial(B2O2, fractionmass= 0.13);
+  Pyrex->AddMaterial(Na2O, fractionmass= 0.07);  
+
+  // Add MPT for Pyrex
+  G4MaterialPropertiesTable* pmtfaceMPT = new G4MaterialPropertiesTable();
+  index = 0;
+  num = fPP.size();
+  //double array_ppFACE[num];
+  //double array_pmtfaceRINDEX[num];
+  //double array_pmtfaceABSORPTION[num];
+  G4double array_ppFACE[10000];
+  G4double array_pmtfaceRINDEX[10000];
+  G4double array_pmtfaceABSORPTION[10000];
+  
+  for (It = fPP.begin(); It != fPP.end(); It++) {
+    PhotonMomentum = (*It)*eV;
+    array_ppFACE[index] = PhotonMomentum;
+    array_pmtfaceRINDEX[index] = fPmtfaceRINDEX[index];
+    array_pmtfaceABSORPTION[index] = fPmtfaceABSORPTION[index]*m;
+    index++;
+  }
+  
+  pmtfaceMPT->AddProperty("RINDEX", array_ppFACE, array_pmtfaceRINDEX, num);  
+  pmtfaceMPT->AddProperty("ABSLENGTH", array_ppFACE, array_pmtfaceABSORPTION, num);
+  
+  Pyrex->SetMaterialPropertiesTable(pmtfaceMPT);
+  //cout<<"PMT Face Material Properties:"<<pmtfaceMPT->DumpTable()<<endl;
+
+  // ------------------------------------------------------------------------------------
+  
+  // Experiment Volume
+  // -----------------
+  fExpVol_x = fPoolHalfX2;
+  fExpVol_y = fPoolHalfY2;
+  fExpVol_z = fPoolHalfZ + fTankHalfHeight + fTankThickness + fCThickness + 1*m;
+  
+  // fsampleHalfX = fExpVol_x;
+  // fsampleHalfY = fExpVol_y;
+  // fsampleHalfZ = fExpVol_z;
+  cout <<" world xyz = " << fExpVol_x << " " << fExpVol_y << " " << fExpVol_z << endl;
+
+  G4Box* expVol_box = new G4Box("expVol_solid", fExpVol_x, fExpVol_y, fExpVol_z);    
+  G4LogicalVolume* expVol_log = new G4LogicalVolume(expVol_box, Air, "expVol_log", 0, 0, 0);
+  G4VPhysicalVolume* expVol_phys 
+    = new G4PVPlacement(0, G4ThreeVector(), expVol_log, "ExpVol", 0, false, 0);
+  
+  
+  // Add the soil
+  // ------------
+  double soil_x = fPoolHalfX2;
+  double soil_y = fPoolHalfY2;
+  double soil_z = fPoolHalfZ + fTankHalfHeight + fTankThickness +fCThickness;
+  
+  G4Box* soil_box = new G4Box("soil_solid", soil_x, soil_y, soil_z);
+  G4LogicalVolume* soil_log = new G4LogicalVolume(soil_box, Soil, "soil_log", 0, 0, 0);
+ 
+  G4double x2 = 0.;
+  G4double y2 = 0.; 
+  G4double z2 = -fExpVol_z + soil_z;
+  G4VPhysicalVolume* soil_phys 
+    = new G4PVPlacement(0, G4ThreeVector(x2,y2,z2), soil_log, "SoilVol", expVol_log, false, 0);
+  
+  
+  // Add the tank
+  // ------------
+  G4double pool_x1 = fPoolHalfX1;
+  G4double pool_y1 = fPoolHalfY1;
+  G4double pool_x2 = fPoolHalfX2;
+  G4double pool_y2 = fPoolHalfY2;
+  G4double pool_z  = fPoolHalfZ;  
+  
+  // G4Trd* pool_trd = new G4Trd("POOL_solid", pool_x1, pool_x2, pool_y1, pool_y2, pool_z);
+//   G4LogicalVolume* pool_log = new G4LogicalVolume(pool_trd, Air, "POOL_log", 0, 0, 0);
+  
+//   x2 = 0.; 
+//   y2 = 0.;
+//   z2 = soil_z - fPoolHalfZ;
+//   G4VPhysicalVolume* pool_phys 
+//     = new G4PVPlacement(0, G4ThreeVector(x2,y2,z2), pool_log, "POOL", soil_log, false, 0);
+  
+  
+  // Add the Tyvek (HDPE)
+  // --------------------
+  G4Tubs* top_solid = new G4Tubs("top_solid", 0., fTankRadius + fTankThickness, fTankThickness/2.,0.*deg, 360.*deg);
+  G4Tubs* side_solid = new G4Tubs("side_solid", fTankRadius, fTankRadius + fTankThickness, fTankHalfHeight,0.*deg, 360.*deg);
+  
+  G4LogicalVolume* top_log = new G4LogicalVolume(top_solid, HDPE, "top_log", 0, 0, 0);
+  G4LogicalVolume* bottom_log = new G4LogicalVolume(top_solid, HDPE, "bottom_log", 0, 0, 0);
+  G4LogicalVolume* side_log = new G4LogicalVolume(side_solid, HDPE, "side_log", 0, 0, 0);
+  
+  x2 = 0.;
+  y2 = 0.;
+  z2 = - soil_z + (fCThickness*2 + fTankHalfHeight*2 + fTankThickness*3./2.);
+  G4VPhysicalVolume* top_phys = new G4PVPlacement(0, G4ThreeVector(x2,y2,z2), top_log, "top", soil_log, false, 0);
+  
+  x2 = 0.;
+  y2 = 0.;
+  z2 = - soil_z + (fCThickness*2 + fTankThickness/2.);
+  G4VPhysicalVolume* bottom_phys = new G4PVPlacement(0, G4ThreeVector(x2,y2,z2), bottom_log, "bottom", soil_log, false, 0);
+  
+  x2 = 0.;
+  y2 = 0.;
+  z2 = - soil_z + (fCThickness*2 + fTankThickness +fTankHalfHeight);
+  G4VPhysicalVolume* side_phys = new G4PVPlacement(0, G4ThreeVector(x2,y2,z2), side_log, "side", soil_log, false, 0);
+  
+  
+  // Add the Concrete
+  // ----------------
+  G4double conthalfx = fTankRadius + fTankThickness;
+  G4double conthalfy = fTankRadius + fTankThickness;
+  G4double conthalfz = fCThickness;
+  G4Box* cont_solid = new G4Box("cont_solid", conthalfx,conthalfy,conthalfz);
+  
+  G4LogicalVolume* cont_log = new G4LogicalVolume(cont_solid, Concrete, "cont_log", 0, 0, 0);
+  
+  x2 = 0.;
+  y2 = 0.;
+  z2 = - soil_z + fCThickness;
+  G4VPhysicalVolume* cont_phys = new G4PVPlacement(0, G4ThreeVector(x2,y2,z2), cont_log, "CONT", soil_log, false, 0);
+  
+  
+  // Add the water
+  // -------------
+  G4double tank_height = fTankHalfHeight;
+  G4double tank_radius = fTankRadius;
+  
+  G4Tubs* tank_solid = new G4Tubs("tank_solid", 0.*m,	tank_radius, tank_height, 0.*deg, 360.*deg);
+  G4LogicalVolume* tank_log = new G4LogicalVolume(tank_solid, Water, "tank_log", 0, 0, 0);
+  
+  x2 = 0.;
+  y2 = 0.;
+  z2 = - soil_z + (fCThickness*2 + fTankThickness + fTankHalfHeight);
+  cout << "water tank = " << tank_radius << " " << z2 << endl;
+  G4VPhysicalVolume* tank_phys 
+    = new G4PVPlacement(0, G4ThreeVector(x2,y2,z2), tank_log, "TANK", soil_log, false, 0);
+    
+  
+  // Add the PMT
+  // -----------
+  // Inside the PMT : Vacuum
+  G4double fPmtInsideRmin = 0.*mm;
+  G4double fPmtInsideRmax = 100.*mm;
+  fMinPhi = 0.*deg;
+  fMaxPhi = 360.*deg;
+  fMinTheta = 90.*deg;
+  fMaxTheta = 270.*deg;
+  
+  G4Sphere* pmt_inside = new G4Sphere("pmt_inside", fPmtInsideRmin, fPmtInsideRmax, fMinPhi, fMaxPhi, fMinTheta, fMaxTheta);
+  G4LogicalVolume* pmt_inside_log = new G4LogicalVolume(pmt_inside, Vacuum, "pmt_inside_log", 0, 0, 0);
+  
+  x2 = 0.;
+  y2 = 0.;
+  z2 = fTankHalfHeight;
+  G4VPhysicalVolume* pmt_inside_phys
+    = new G4PVPlacement(0, G4ThreeVector(x2, y2, z2), pmt_inside_log,"pmt_inside",tank_log,false,0);
+  
+  // Add the Photocathode :  
+  fPmtRmin = 100.*mm;
+  fPmtRmax = 101.*mm;
+  G4Sphere* pmt_solid = new G4Sphere("pmt_solid", fPmtRmin, fPmtRmax, fMinPhi, fMaxPhi, fMinTheta, fMaxTheta);
+  G4LogicalVolume* pmt_log = new G4LogicalVolume(pmt_solid, Pyrex, "pmt_log", 0, 0, 0);
+  
+  x2 = 0.;  
+  y2 = 0.;
+  z2 = fTankHalfHeight;
+  G4VPhysicalVolume* pmt_phys = new G4PVPlacement(0, G4ThreeVector(x2, y2, z2), pmt_log, "pmt", tank_log, false, 0);
+  
+  
+  // Define the PMT as a sensitive detector (SD)
+  G4SDManager* SDman = G4SDManager::GetSDMpointer();
+  
+  G4String SDname = "PMT";
+  G4MD_PMTAction* pmtSD = new G4MD_PMTAction(SDname,1);
+  SDman->AddNewDetector(pmtSD);
+  pmt_log->SetSensitiveDetector(pmtSD);
+  
+  
+
+
+  // Optical surface properties for the tank liner and water 
+  // -------------------------------------------------------
+  G4OpticalSurface * OpLinerSurface = new G4OpticalSurface("WallSurface");
+  
+  G4LogicalBorderSurface* topSurface 
+    = new G4LogicalBorderSurface("topSurface", tank_phys, top_phys,OpLinerSurface);
+  
+  G4LogicalBorderSurface* bottomSurface 
+    = new G4LogicalBorderSurface("bottomSurface", tank_phys, bottom_phys,OpLinerSurface);
+  
+  G4LogicalBorderSurface* sideSurface 
+    = new G4LogicalBorderSurface("sideSurface", tank_phys, side_phys,OpLinerSurface);
+  
+  OpLinerSurface->SetModel(unified);
+  OpLinerSurface->SetType(dielectric_dielectric);
+  OpLinerSurface->SetFinish(groundbackpainted);
+  OpLinerSurface->SetSigmaAlpha(fSIGMA_ALPHA);
+  
+  G4MaterialPropertiesTable* linerOpticalMPT = new G4MaterialPropertiesTable();
+  G4MaterialPropertiesTable* waterOpticalMPT = new G4MaterialPropertiesTable();
+  
+  index = 0;
+  num = fPP_LINER_SURFACE.size();
+  //double array_ppLINERSURFACE[num];
+  //double array_linerSPECULARLOBECONSTANT[num];
+  //double array_linerSPECULARSPIKECONSTANT[num];
+  //double array_linerBACKSCATTERCONSTANT[num];
+  //double array_linerREFLECTIVITY[num];
+  //double array_TYVEK_RINDEX[num];
+  G4double array_ppLINERSURFACE[10000];
+  G4double array_linerSPECULARLOBECONSTANT[10000];
+  G4double array_linerSPECULARSPIKECONSTANT[10000];
+  G4double array_linerBACKSCATTERCONSTANT[10000];
+  G4double array_linerREFLECTIVITY[10000];
+  G4double array_TYVEK_RINDEX[10000];
+  
+  for ( It = fPP_LINER_SURFACE.begin(); It != fPP_LINER_SURFACE.end(); It++ ){
+    PhotonMomentum = (*It)*eV;
+    array_ppLINERSURFACE[index] = PhotonMomentum;
+    array_linerSPECULARLOBECONSTANT[index]= fLinerSPECULARLOBECONSTANT[index];
+    array_linerSPECULARSPIKECONSTANT[index]=fLinerSPECULARSPIKECONSTANT[index];
+    array_linerBACKSCATTERCONSTANT[index] = fLinerBACKSCATTERCONSTANT[index];
+    array_linerREFLECTIVITY[index] = fLinerREFLECTIVITY[index];
+    array_TYVEK_RINDEX[index] = fLinerTYVEK_RINDEX[index];
+    index++;
+    // G4cout << fLinerREFLECTIVITY[index] << G4endl;
+  }
+  
+  linerOpticalMPT->AddProperty("SPECULARLOBECONSTANT", array_ppLINERSURFACE,
+			       array_linerSPECULARLOBECONSTANT, num);
+  
+  linerOpticalMPT->AddProperty("SPECULARSPIKECONSTANT", array_ppLINERSURFACE,
+			       array_linerSPECULARSPIKECONSTANT, num);
+  
+  linerOpticalMPT->AddProperty("BACKSCATTERCONSTANT",   array_ppLINERSURFACE,
+			       array_linerBACKSCATTERCONSTANT, num);
+  
+  linerOpticalMPT->AddProperty("REFLECTIVITY",          array_ppLINERSURFACE,
+			       array_linerREFLECTIVITY, num);
+  
+  linerOpticalMPT->AddProperty("RINDEX",                array_ppLINERSURFACE,
+			       array_TYVEK_RINDEX, num); 
+  
+  OpLinerSurface->SetMaterialPropertiesTable(linerOpticalMPT); 
+
+  
+  // Visualization attributes
+  // ------------------------
+  // expVol_log->SetVisAttributes (G4VisAttributes::Invisible);
+  
+  G4VisAttributes* ExpBoxVisAtt = new G4VisAttributes(G4Colour(0.,1.,1.)); // (0,1,1 = Cyan) --> ExpVolume = Air
+  ExpBoxVisAtt->SetVisibility(true);
+  expVol_log->SetVisAttributes(ExpBoxVisAtt);
+
+  G4VisAttributes* SoilBoxVisAtt = new G4VisAttributes(G4Colour(0.,0.,0.)); // (0,0,0 = Black) --> Soil
+  SoilBoxVisAtt->SetVisibility(true);
+  soil_log->SetVisAttributes(SoilBoxVisAtt);
+
+  // G4VisAttributes* PoolBoxVisAtt = new G4VisAttributes(G4Colour(1.,0.,0.)); // (1,0,0 =  Red) --> ??
+//   PoolBoxVisAtt->SetVisibility(true);
+//   pool_log->SetVisAttributes(PoolBoxVisAtt);
+  
+  G4VisAttributes* TyvekBoxVisAtt = new G4VisAttributes(G4Colour(0.,1.,1.)); // (1,0,0 = Red) --> Tyvek 
+  TyvekBoxVisAtt->SetVisibility(true);
+  top_log->SetVisAttributes(TyvekBoxVisAtt); bottom_log->SetVisAttributes(TyvekBoxVisAtt);
+  side_log->SetVisAttributes(TyvekBoxVisAtt);
+
+  G4VisAttributes* TankBoxVisAtt = new G4VisAttributes(G4Colour(0.,0.,1.)); // (0,0,1 =  Blue) --> Water
+  TankBoxVisAtt->SetVisibility(true);
+  tank_log->SetVisAttributes(TankBoxVisAtt);
+
+  G4VisAttributes* ConcreteBoxVisAtt = new G4VisAttributes(G4Colour(0.5,0.5,0.5)); // (0.5,.. = grey) --> Concrete
+  ConcreteBoxVisAtt->SetVisibility(true);
+  cont_log->SetVisAttributes(ConcreteBoxVisAtt);
+  
+  G4VisAttributes* PMTBoxVisAtt = new G4VisAttributes(G4Colour(0.,1.,0.)); // (0,1,0 = Green) --> PMT
+  PMTBoxVisAtt->SetVisibility(true);
+  pmt_log->SetVisAttributes(PMTBoxVisAtt); pmt_inside_log->SetVisAttributes(PMTBoxVisAtt);
+  
+  
+  
+  return expVol_phys;
+}
+
+

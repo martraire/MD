@@ -1,0 +1,38 @@
+<?xml encoding="ISO-8859-1"?>
+
+<!ELEMENT document (injectorParameters)>
+
+<!ELEMENT injectorParameters (numberOfRuns,
+                              (particleName | particleType),
+                              particleEnergy, particleX,
+                              particleY, particleZ, particlePX, particlePY,
+                              particlePZ, particleTheta,
+                              particleTime,inputSwitch)>
+
+<!ELEMENT numberOfRuns (#PCDATA)>
+
+<!ELEMENT particleName (#PCDATA)>
+<!ELEMENT particleType (#PCDATA)>
+
+<!ELEMENT particleEnergy (#PCDATA)>
+<!ATTLIST particleEnergy unit CDATA #REQUIRED>
+
+
+<!ELEMENT particleX (#PCDATA)>
+<!ATTLIST particleX unit CDATA #REQUIRED>
+
+<!ELEMENT particleY (#PCDATA)>
+<!ATTLIST particleY unit CDATA #REQUIRED>
+
+<!ELEMENT particleZ (#PCDATA)>
+<!ATTLIST particleZ unit CDATA #REQUIRED>
+
+<!ELEMENT particlePX (#PCDATA)>
+<!ELEMENT particlePY (#PCDATA)>
+<!ELEMENT particlePZ (#PCDATA)>
+<!ELEMENT particleTheta (#PCDATA)>
+
+<!ELEMENT particleTime (#PCDATA)>
+<!ATTLIST particleTime unit CDATA #REQUIRED>
+
+<!ELEMENT inputSwitch (#PCDATA)>

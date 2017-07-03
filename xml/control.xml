@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- <!DOCTYPE document SYSTEM "control.dtd"> -->
+<document>
+
+<controlParameters>
+
+    <detectorFile>   xml/detector.xml     </detectorFile>
+    <injectorFile>  xml/injector.xml  </injectorFile>
+
+</controlParameters>
+
+</document>

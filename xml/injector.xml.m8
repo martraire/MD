@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE document SYSTEM "injector.dtd">
+<!-- inputSwitch(int) = 1: fixed site and direction (x,y,z) +(px,py,pz)     -->
+<!--                       input site/direction/energy/particle             -->
+<!--                       gamma                                            -->
+<!--                       electron                                         -->
+<!--                       muon                                             -->
+<!--                                                                        -->
+<!-- inputSwitch(int) = 0: free site and direction (x,y,z) +(px,py,pz)      -->
+<!--                       input energy/particle                            -->
+
+<document>
+
+<injectorParameters>
+
+  <numberOfRuns> 1 </numberOfRuns>
+  <particleName> gamma </particleName>
+  <particleEnergy unit="MeV"> 400. </particleEnergy>
+  <particleX unit="m"> 3.0 </particleX>
+  <particleY unit="m"> 0.0 </particleY>
+  <particleZ unit="m"> 0.612 </particleZ>
+  <particlePX> 0.0 </particlePX>
+  <particlePY> 0.0 </particlePY>
+  <particlePZ> -1.0 </particlePZ>
+  <particleTheta> 0.0 </particleTheta>
+  <particleTime unit="ns"> 0.0 </particleTime>
+  <inputSwitch> 1 </inputSwitch>
+  <energyminimum unit="MeV"> 1.e2 </energyminimum>
+  <energymaximum unit="MeV"> 1.e6 </energymaximum>
+  <electronindex> -2.5 </electronindex>
+  <gammaindex> -1.8 </gammaindex>
+</injectorParameters>
+
+</document>
